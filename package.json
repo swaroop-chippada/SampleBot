@@ -1,0 +1,16 @@
+{
+  "name": "samplebot",
+  "version": "1.0.0",
+  "description": "just a sample bot",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "author": "swaroop",
+  "license": "ISC",
+  "dependencies": {
+    "botbuilder": "^3.8.4",
+    "node-wit": "^4.2.0",
+    "restify": "^4.3.0"
+  }
+}
