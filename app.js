@@ -18,13 +18,41 @@ var connector = new builder.ChatConnector({
 server.post('/api/messages', connector.listen());
 
 // Receive messages from the user and respond
-
+var userId;
+var password;
+var isPasswordInput;
 var bot = new builder.UniversalBot(connector, [
-		function(session) {
+		
+	function(session) {
 			session.send("Welcome to Yes bot !");
-			session.beginDialog('welcomeMessage');
+			session.beginDialog('userIdDialog');
 		},
 		function(session, results) {
+				userId = results.response;
+			console.log(userId);
+			if(results.response == 'loga'){
+				session.beginDialog('welcomeMessage');
+			}else{
+			session.beginDialog('passwordDailog');
+
+			}
+			
+		},function(session,results){
+			password = results.response;
+			if(isPasswordInput == 'true'){
+				if(results.response == "password"){
+					session.beginDialog('welcomeMessage');	
+				}else{
+					session.endConversation("Password is incorrect, please input any value to relogin",
+						results.response);
+					session.endDialog();		
+				}
+			}else if (results.response == 'recharge') {
+				session.beginDialog('rechargeDailog');
+			} else if (results.response == 'usage') {
+				session.beginDialog('usageDailog');
+			}
+		},function(session,results){
 			if (results.response == 'recharge') {
 				session.beginDialog('rechargeDailog');
 			} else if (results.response == 'usage') {
@@ -38,8 +66,20 @@ var bot = new builder.UniversalBot(connector, [
 
 		} ]);
 
-
 //Dialog to welcome
+bot.dialog('userIdDialog', [
+    function (session) {
+    	//var msg = messages.welcomeMessage(session);
+		//	var msg = new builder.Message(session).addAttachment(messages.createSigninCard(session));
+		builder.Prompts.text(session, 'Hi! Please enter you userid');
+		
+    },
+    function (session, results) {
+	
+        session.endDialogWithResult(results);
+    }
+]);
+
 bot.dialog('welcomeMessage', [
     function (session) {
     	var msg = messages.welcomeMessage(session);
@@ -50,10 +90,24 @@ bot.dialog('welcomeMessage', [
     }
 ]);
 
+bot.dialog('passwordDailog', [
+    function (session) {
+    	//var msg = messages.welcomeMessage(session);
+		//	var msg = new builder.Message(session).addAttachment(messages.createSigninCard(session));
+		builder.Prompts.text(session, 'Hi! Please enter you password');
+		isPasswordInput = 'true';
+    },
+    function (session, results) {
+	
+        session.endDialogWithResult(results);
+    }
+]);
+
 
 //Dialog to rechargeDailog
 bot.dialog('rechargeDailog', [
     function (session) {
+		console.log("suerid---->"+userId);
     	var msg = messages.topUpOptionsMessage(session);
     	builder.Prompts.text(session, msg);
     },
@@ -66,7 +120,7 @@ bot.dialog('rechargeDailog', [
 //Dialog to usageDailog
 bot.dialog('usageDailog', [
     function (session) {
-    	console.log('id : %s', messages.from.id);
+    	
     	var adaptiveCardMessage = messages.usageCard(session, "Swap", "1GB" , "500MB");
 		session.send(adaptiveCardMessage);
 		var msg = messages.topUpOptionsMessage2(session);
