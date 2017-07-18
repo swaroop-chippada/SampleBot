@@ -25,6 +25,17 @@ exports.topUpOptionsMessage = function(session) {
 											"100RM") ]));
 };
 
+exports.dataOptionsMessage = function(session) {
+	return new builder.Message(session).text("Do you wish to addon data ?")
+			.suggestedActions(
+					builder.SuggestedActions.create(session, [
+							builder.CardAction
+									.imBack(session, "500MB", "500MB"),
+							builder.CardAction.imBack(session, "1GB", "1GB"),
+							builder.CardAction.imBack(session, "NoThanks",
+									"No Thanks") ]));
+};
+
 exports.usageCard = function(session, userName, limit, usage) {
 	return new builder.Message(session)
 			.addAttachment({
@@ -40,8 +51,8 @@ exports.usageCard = function(session, userName, limit, usage) {
 								"items" : [ {
 									"type" : "TextBlock",
 									"text" : "Hi " + userName
-											+ ", your available Data limit",
-									"isSubtle" : true
+											+ ", your available data limit",
+									"weight" : "bolder"
 								} ]
 							},
 							{
@@ -87,4 +98,20 @@ exports.usageCard = function(session, userName, limit, usage) {
 							} ]
 				}
 			});
+};
+
+
+exports.topUpOptionsMessage2 = function(session) {
+	return new builder.Message(session).text("Would You like to ?")
+			.suggestedActions(
+					builder.SuggestedActions.create(session,
+							[
+									builder.CardAction.imBack(session, "10",
+											"10RM"),
+									builder.CardAction.imBack(session, "20",
+											"20RM"),
+									builder.CardAction.imBack(session, "50",
+											"50RM"),
+									builder.CardAction.imBack(session, "100",
+											"100RM") ]));
 };

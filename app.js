@@ -21,21 +21,15 @@ server.post('/api/messages', connector.listen());
 
 var bot = new builder.UniversalBot(connector, [
 		function(session) {
-			var msg = messages.welcomeMessage(session);
 			session.send("Welcome to Yes bot !");
-			builder.Prompts.text(session, msg);
+			session.beginDialog('welcomeMessage');
 		},
 		function(session, results) {
 			if (results.response == 'recharge') {
-				msg = messages.topUpOptionsMessage(session);
+				session.beginDialog('rechargeDailog');
 			} else if (results.response == 'usage') {
-				var adaptiveCardMessage = messages.usageCard(session, "Swap", "1GB" , "500MB");
-				session.send(adaptiveCardMessage);
+				session.beginDialog('usageDailog');
 			}
-			// Process request and display reservation details
-			// session.send("selected Service: %s",
-			// session.dialogData.serviceType);
-			// builder.Prompts.text(session, msg);
 		},
 		function(session, results) {
 			session.endConversation("Thank you for using our services %s!",
@@ -43,3 +37,42 @@ var bot = new builder.UniversalBot(connector, [
 			session.endDialog();
 
 		} ]);
+
+
+//Dialog to welcome
+bot.dialog('welcomeMessage', [
+    function (session) {
+    	var msg = messages.welcomeMessage(session);
+    	builder.Prompts.text(session, msg);
+    },
+    function (session, results) {
+        session.endDialogWithResult(results);
+    }
+]);
+
+
+//Dialog to rechargeDailog
+bot.dialog('rechargeDailog', [
+    function (session) {
+    	var msg = messages.topUpOptionsMessage(session);
+    	builder.Prompts.text(session, msg);
+    },
+    function (session, results) {
+        session.endDialogWithResult(results);
+    }
+]);
+
+
+//Dialog to usageDailog
+bot.dialog('usageDailog', [
+    function (session) {
+    	console.log('id : %s', messages.from.id);
+    	var adaptiveCardMessage = messages.usageCard(session, "Swap", "1GB" , "500MB");
+		session.send(adaptiveCardMessage);
+		var msg = messages.topUpOptionsMessage2(session);
+    	builder.Prompts.text(session, msg);
+    },
+    function (session, results) {
+        session.endDialogWithResult(results);
+    }
+]);
