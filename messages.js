@@ -59,66 +59,89 @@ exports.dataOptionsMessage = function(session) {
 									"No Thanks") ]));
 };
 
-exports.usageCard = function(session, userName, limit, usage) {
+exports.usageCard = function(session, data, credit) {
 	return new builder.Message(session)
 			.addAttachment({
 				contentType : "application/vnd.microsoft.card.adaptive",
 				content : {
-					"$schema" : "http://adaptivecards.io/schemas/adaptive-card.json",
-					"type" : "AdaptiveCard",
-					"version" : "0.5",
-					"speak" : "<s>Your usage balance is" + usage + "</s>",
-					"body" : [
-							{
-								"type" : "Container",
-								"items" : [ {
-									"type" : "TextBlock",
-									"text" : "Hi " + userName
-											+ ", your available data limit",
-									"weight" : "bolder"
-								} ]
-							},
-							{
-								"type" : "Container",
-								"items" : [ {
-									"type" : "ColumnSet",
-									"columns" : [
-											{
-												"type" : "Column",
-												"size" : "auto",
-												"items" : [ {
-													"type" : "Image",
-													"url" : "http://vik.kompas.com/merapah-trans-jawa-2/images/preload.gif",
-													"size" : "medium",
-													"horizontalAlignment" : "center"
-												} ]
-											},
-											{
-												"type" : "Column",
-												"size" : "auto",
-												"items" : [
-														{
-															"type" : "ColumnSet",
-															"columns" : [ {
-																"type" : "Column",
-																"size" : "auto",
-																"items" : [ {
-																	"type" : "TextBlock",
-																	"text" : usage
-																			+ " left",
-																	"size" : "extraLarge"
-																} ]
-															} ]
-														},
-														{
-															"type" : "TextBlock",
-															"text" : "Out of "
-																	+ limit,
-															"weight" : "bolder"
-														} ]
-											} ]
-								} ]
-							} ]
+					"$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+					"type": "AdaptiveCard",
+					"speak": "<s>Your Plan Usage Details.</s><s>It will not leave until 10:10 AM.</s>",
+					"body": [
+						{
+							"type": "ColumnSet",
+							"columns": [
+								{
+									"type": "Column",
+									"size": "auto",
+									"items": [
+										{
+									"type": "TextBlock",
+									"text": "Usage Details",
+									"weight": "bolder",
+									"size": "medium"
+										}
+									]
+								}
+							]
+						},
+						{
+							"type": "ColumnSet",
+							"separation": "strong",
+							"columns": [
+								{
+									"type": "Column",
+									"size": "stretch",
+									"items": [
+										{
+											"type": "TextBlock",
+											"text": "Unused Data",
+											"isSubtle": true
+										},
+										{
+											"type": "TextBlock",
+											"text": "Credit Balance"
+										},
+										{
+											"type": "TextBlock",
+											"text": "SMS"
+										},
+										{
+											"type": "TextBlock",
+											"text": "Contract Period"
+										}
+									]
+								},
+								{
+									"type": "Column",
+									"size": "auto",
+									"items": [
+										{
+											"type": "TextBlock",
+											"text": data,
+											"horizontalAlignment": "right",
+											"isSubtle": true
+										},
+										{
+											"type": "TextBlock",
+											"text": credit,
+											"horizontalAlignment": "right"
+										},
+										{
+											"type": "TextBlock",
+											"text": "200 SMS",
+											"horizontalAlignment": "right"
+										},
+										{
+											"type": "TextBlock",
+											"text": "1 Year",
+											"horizontalAlignment": "right"
+										}
+									]
+								}
+							]
+						}
+					]
 				}
 			});
 };
@@ -213,18 +236,6 @@ exports.paycard = function(session, userName, limit, usage) {
           ]
         }
       ]
-    }
-  ],
-  "actions": [
-    {
-      "type": "Action.Submit",
-	  "title": "Submit",
-		
-	  
-    },
-    {
-      "type": "Action.Submit",
-      "title": "Cancel"
     }
   ]
 }

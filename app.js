@@ -157,14 +157,30 @@ bot.dialog('rechargeDailog', [
 bot.dialog('paymentGateway', [
     function (session) {
 		
-    	var msg = messages.payActionMessage(session);
+    	var msg = messages.paycard(session).suggestedActions(
+				builder.SuggestedActions.create(session, [
+						builder.CardAction
+								.imBack(session, "Pay", "Pay"),
+						builder.CardAction.imBack(session, "Cancel", "Cancel") ]))
     	builder.Prompts.text(session, msg);
     },
     function (session, results) {
 		console.log("rcardsuerid---->"+userId);
 		console.log("payment--->"+results.response);
-		
-		//session.endDialogWithResult(results);
+
+if(results.response == 'Pay'){
+request("http://10.24.3.175:8881/selfcare/updateBalance.do?loginId="+userId+"&addOnAmt="+topupAmount , function(error, response, body) {
+			 console.log(body);
+			//console.log(error);
+			//console.log(response);
+			if(JSON.parse(body)){
+				var msg= messages.usageCard(session, "544mb", "10RM");
+				session.send(msg);
+			}
+			});
+}else if(results.response == 'Cancel'){
+	session.beginDialog('rechargeDailog');
+}		//session.endDialogWithResult(results);
     }
 ]);
 
@@ -172,7 +188,7 @@ bot.dialog('paymentGateway', [
 bot.dialog('usageDailog', [
     function (session) {
     	
-    	var adaptiveCardMessage = messages.usageCard(session, "Swap", "1GB" , "500MB");
+    	var adaptiveCardMessage = messages.usageCard(session, "500mb", "10RM" );
 		session.send(adaptiveCardMessage);
 		var msg = messages.topUpOptionsMessage2(session);
     	builder.Prompts.text(session, msg);
