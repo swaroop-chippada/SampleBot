@@ -1,5 +1,18 @@
 var builder = require('botbuilder');
+var moment = require('moment');
 
+exports.onloadMessage = function(session){
+console.log(moment().hour());
+var hours = moment().hour();
+if(hours >=0 && hours<12){
+return "Good Morning ";
+}else if(hours >=12 && hours < 17){
+	return "Good Afternoon";
+}else{
+	return "Good Evening";
+}
+
+};
 exports.welcomeMessage = function(session) {
 	return new builder.Message(session).text(
 			"I can provide below services to you ").suggestedActions(

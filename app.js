@@ -24,13 +24,13 @@ var isPasswordInput;
 var bot = new builder.UniversalBot(connector, [
 		
 	function(session) {
-			session.send("Welcome to Yes bot !");
+			session.send("Hi " +messages.onloadMessage(session));
 			session.beginDialog('userIdDialog');
 		},
 		function(session, results) {
 				userId = results.response;
 			console.log(userId);
-			if(results.response == 'loga'){
+			if(results.response == '0185920001'){
 				session.beginDialog('welcomeMessage');
 			}else{
 			session.beginDialog('passwordDailog');
@@ -71,7 +71,7 @@ bot.dialog('userIdDialog', [
     function (session) {
     	//var msg = messages.welcomeMessage(session);
 		//	var msg = new builder.Message(session).addAttachment(messages.createSigninCard(session));
-		builder.Prompts.text(session, 'Hi! Please enter you userid');
+		builder.Prompts.text(session, 'I need to autthenticae you. Please enter you YesMobile Number');
 		
     },
     function (session, results) {
