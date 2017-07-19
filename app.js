@@ -198,8 +198,13 @@ bot.dialog('usageDailog', [
 			console.log("rcardsuerid---->" + userId);
 			console.log("amount--->" + results.response);
 			topupAmount = results.response;
-
-			session.beginDialog('paymentGateway');
+			if(results.response == 'NoThanks'){
+				session.endConversation("Thank you for using our services !")
+				session.endDialog();
+			}else{
+				session.beginDialog('paymentGateway');
+			}
+			
 			// session.endDialogWithResult(results);
 		} ]);
 

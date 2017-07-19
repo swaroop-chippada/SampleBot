@@ -1,259 +1,222 @@
+var restify = require('restify');
 var builder = require('botbuilder');
-var moment = require('moment');
+var messages = require('./messages');
+var request = require("request");
 
-exports.onloadMessage = function(session){
-console.log(moment().hour());
-var hours = moment().hour();
-if(hours >=0 && hours<12){
-return "Good Morning ";
-}else if(hours >=12 && hours < 17){
-	return "Good Afternoon";
-}else{
-	return "Good Evening";
-}
+// Setup Restify Server
+var server = restify.createServer();
+server.listen(process.env.port || process.env.PORT || 3978, function() {
+	console.log('%s listening to %s', server.name, server.url);
+});
 
-};
-exports.welcomeMessage = function(session) {
-	return new builder.Message(session).text(
-			"I can provide below services to you ").suggestedActions(
-			builder.SuggestedActions.create(session, [
-					builder.CardAction.imBack(session, "recharge",
-							"TopUp/Recharge"),
-					builder.CardAction.imBack(session, "usage",
-							"Show current usage") ]));
+var optionsget = {
+	host : 'http://10.24.3.175:8881/', // here only the domain name
+	// (no http/https !)
+	port : 443,
+	path : '/selfcare/isAuthenticate.do?loginId=1135646723@yes.my', // the rest
+	// of the
+	// url with
+	// parameters
+	// if needed
+	method : 'GET' // do GET
 };
 
-exports.payActionMessage = function(session) {
-	return new builder.Message(session).text("Please select Top up amount")
-			.suggestedActions(
-					builder.SuggestedActions.create(session,
-							[
-									builder.CardAction.imBack(session, "pay",
-											"PAY"),
-									builder.CardAction.imBack(session, "cancel",
-											"Cancel") ]));
-};
-exports.topUpOptionsMessage = function(session) {
-	return new builder.Message(session).text("Please select Top up amount")
-			.suggestedActions(
-					builder.SuggestedActions.create(session,
-							[
-									builder.CardAction.imBack(session, "10",
-											"10RM"),
-									builder.CardAction.imBack(session, "20",
-											"20RM"),
-									builder.CardAction.imBack(session, "50",
-											"50RM"),
-									builder.CardAction.imBack(session, "100",
-											"100RM") ]));
-};
+// Create chat connector for communicating with the Bot Framework Service
+var connector = new builder.ChatConnector({
+	appId : process.env.MICROSOFT_APP_ID,
+	appPassword : process.env.MICROSOFT_APP_PASSWORD
+});
 
-exports.dataOptionsMessage = function(session) {
-	return new builder.Message(session).text("Do you wish to addon data ?")
-			.suggestedActions(
+// Listen for messages from users
+server.post('/api/messages', connector.listen());
+
+// Receive messages from the user and respond
+var userId;
+var password;
+var isPasswordInput = 'false';
+var topupAmount = 0;
+var bot = new builder.UniversalBot(
+		connector,
+		[
+
+				function(session) {
+					session.send("Hi " + messages.onloadMessage(session));
+					session.beginDialog('userIdDialog');
+				},
+				function(session, results) {
+					userId = results.response;
+					console.log(userId);
+					request(
+							"http://10.24.3.175:8881/selfcare/isAuthenticate.do?loginId="
+									+ results.response, function(error,
+									response, body) {
+								// console.log(body);
+								// console.log(error);
+								// console.log(response);
+								if (body == 'true') {
+									isPasswordInput = 'false';
+									session.beginDialog('welcomeMessage');
+								} else {
+									session.beginDialog('passwordDailog');
+								}
+							});
+
+				},
+				function(session, results) {
+					password = results.response;
+					console.log("topup--->" + results.response);
+					console.log("passowrd--->" + isPasswordInput);
+					if (isPasswordInput == 'true') {
+
+						request(
+								"http://10.24.3.175:8881/selfcare/authenticate.do?loginId="
+										+ userId + "&pword=" + results.response,
+								function(error, response, body) {
+									console.log(body);
+									// console.log(error);
+									// console.log(response);
+									if (body == 'true') {
+										session.beginDialog('welcomeMessage');
+									} else {
+										session
+												.endConversation(
+														"Password is incorrect, please input any value to relogin",
+														results.response);
+										session.endDialog();
+									}
+								});
+					} else if (results.response == 'recharge') {
+						session.beginDialog('rechargeDailog');
+					} else if (results.response == 'usage') {
+						session.beginDialog('usageDailog');
+					}
+				},
+				function(session, results) {
+					console.log("rc--->" + results.response);
+					if (results.response == 'recharge') {
+						session.beginDialog('rechargeDailog');
+					} else if (results.response == 'usage') {
+						session.beginDialog('usageDailog');
+					}
+				},
+				function(session, results) {
+					session
+							.endConversation("Thank you for using our services !")
+					session.endDialog();
+
+				} ]);
+
+// Dialog to welcome
+bot
+		.dialog(
+				'userIdDialog',
+				[
+						function(session) {
+							builder.Prompts
+									.text(session,
+											'I need to autthenticae you. Please enter you YesMobile Number');
+
+						}, function(session, results) {
+
+							session.endDialogWithResult(results);
+						} ]);
+
+bot.dialog('welcomeMessage', [ function(session) {
+	var msg = messages.welcomeMessage(session);
+	builder.Prompts.text(session, msg);
+}, function(session, results) {
+	session.endDialogWithResult(results);
+} ]);
+
+bot.dialog('passwordDailog', [ function(session) {
+	// var msg = messages.welcomeMessage(session);
+	// var msg = new
+	// builder.Message(session).addAttachment(messages.createSigninCard(session));
+	builder.Prompts.text(session, 'Please enter OTP');
+	isPasswordInput = 'true';
+}, function(session, results) {
+
+	session.endDialogWithResult(results);
+} ]);
+
+// Dialog to rechargeDailog
+bot.dialog('rechargeDailog', [ function(session) {
+
+	var msg = messages.topUpOptionsMessage(session);
+	builder.Prompts.text(session, msg);
+}, function(session, results) {
+	console.log("rcardsuerid---->" + userId);
+	console.log("amount--->" + results.response);
+	topupAmount = results.response;
+
+	session.beginDialog('paymentGateway');
+	// session.endDialogWithResult(results);
+} ]);
+
+bot.dialog('paymentGateway', [
+		function(session) {
+
+			var msg = messages.paycard(session).suggestedActions(
 					builder.SuggestedActions.create(session, [
-							builder.CardAction
-									.imBack(session, "500MB", "500MB"),
-							builder.CardAction.imBack(session, "1GB", "1GB"),
-							builder.CardAction.imBack(session, "NoThanks",
-									"No Thanks") ]));
-};
+							builder.CardAction.imBack(session, "Pay", "Pay"),
+							builder.CardAction.imBack(session, "Cancel",
+									"Cancel") ]))
+			builder.Prompts.text(session, msg);
+		},
+		function(session, results) {
+			console.log("rcardsuerid---->" + userId);
+			console.log("payment--->" + results.response);
 
-exports.usageCard = function(session, data, credit) {
-	return new builder.Message(session)
-			.addAttachment({
-				contentType : "application/vnd.microsoft.card.adaptive",
-				content : {
-					"$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-					"type": "AdaptiveCard",
-					"speak": "<s>Your Plan Usage Details.</s><s>It will not leave until 10:10 AM.</s>",
-					"body": [
-						{
-							"type": "ColumnSet",
-							"columns": [
-								{
-									"type": "Column",
-									"size": "auto",
-									"items": [
-										{
-									"type": "TextBlock",
-									"text": "Usage Details",
-									"weight": "bolder",
-									"size": "medium"
-										}
-									]
-								}
-							]
-						},
-						{
-							"type": "ColumnSet",
-							"separation": "strong",
-							"columns": [
-								{
-									"type": "Column",
-									"size": "stretch",
-									"items": [
-										{
-											"type": "TextBlock",
-											"text": "Unused Data",
-											"isSubtle": true
-										},
-										{
-											"type": "TextBlock",
-											"text": "Credit Balance"
-										},
-										{
-											"type": "TextBlock",
-											"text": "SMS"
-										},
-										{
-											"type": "TextBlock",
-											"text": "Contract Period"
-										}
-									]
-								},
-								{
-									"type": "Column",
-									"size": "auto",
-									"items": [
-										{
-											"type": "TextBlock",
-											"text": data,
-											"horizontalAlignment": "right",
-											"isSubtle": true
-										},
-										{
-											"type": "TextBlock",
-											"text": credit,
-											"horizontalAlignment": "right"
-										},
-										{
-											"type": "TextBlock",
-											"text": "200 SMS",
-											"horizontalAlignment": "right"
-										},
-										{
-											"type": "TextBlock",
-											"text": "1 Year",
-											"horizontalAlignment": "right"
-										}
-									]
-								}
-							]
-						}
-					]
-				}
-			});
-};
+			if (results.response == 'Pay') {
+				request(
+						"http://10.24.3.175:8881/selfcare/updateBalance.do?loginId="
+								+ userId + "&addOnAmt=" + topupAmount,
+						function(error, response, body) {
+							session.beginDialog('successTopUp', body);
+						});
+			} else if (results.response == 'Cancel') {
+				session.beginDialog('rechargeDailog');
+			} // session.endDialogWithResult(results);
+		} ]);
 
+// Dialog to usageDailog
+bot.dialog('usageDailog', [
+		function(session) {
+			request(
+					"http://10.24.3.175:8881/selfcare/getBalanceDetail.do?loginId="
+							+ userId , function(
+							error, response, body) {
+						var adaptiveCardMessage = messages.usageCard(session,
+								JSON.parse(body).usuageDetail.unUsedData, ""
+								+ JSON.parse(body).balanceAmt);
+						session.send(adaptiveCardMessage);
+						var msg = messages.topUpOptionsMessage2(session);
+						builder.Prompts.text(session, msg);
+					});
 
-exports.paycard = function(session, userName, limit, usage) {
-	return new builder.Message(session)
-			.addAttachment({
-				contentType : "application/vnd.microsoft.card.adaptive",
-				content : {
-  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-  "type": "AdaptiveCard",
-  "version": "0.5",
-  "body": [
-    {
-      "type": "ColumnSet",
-      "columns": [
-        {
-          "type": "Column",
-          "size": 2,
-          "items": [
-            {
-              "type": "TextBlock",
-              "text": "Please enter card details",
-              "weight": "bolder",
-              "size": "large"
-            },
-            {
-              "type": "TextBlock",
-              "text": "i am robot, i don't remember user details until told!",
-              "isSubtle": true,
-              "wrap": true
-            },
-            {
-              "type": "TextBlock",
-              "text": "Don't worry, we'll never share or store your information.",
-              "isSubtle": true,
-              "wrap": true,
-              "size": "small"
-            },
-            {
-              "type": "TextBlock",
-              "text": "Card Number",
-              "wrap": true
-            },
-            {
-              "type": "Input.Text",
-              "id": "cardNumber",
-              "placeholder": "411 XXX"
-            },
-            {
-              "type": "TextBlock",
-              "text": "Card Type",
-              "wrap": true
-            },
-            {
-              "type": "Input.Text",
-              "id": "cardType",
-              "placeholder": "visa/master",
-              "style": "email"
-            },
-            {
-              "type": "TextBlock",
-              "text": "CVV"
-            },
-            {
-              "type": "Input.Text",
-              "id": "cvv",
-              "placeholder": "xxx.xxx.xxxx"
-            },
-            {
-              "type": "TextBlock",
-              "text": "Valid Until",
-              "wrap": true
-            },
-            {
-              "type": "Input.Text",
-              "id": "cardType",
-              "placeholder": "01-01-2001"
-            }
-          ]
-        },
-        {
-          "type": "Column",
-          "size": 1,
-          "items": [
-            {
-              "type": "Image",
-              "url": "https://upload.wikimedia.org/wikipedia/commons/b/b2/Diver_Silhouette%2C_Great_Barrier_Reef.jpg",
-              "size": "auto"
-            }
-          ]
-        }
-      ]
-    }
-  ]
-}
-			});
-};
+		}, function(session, results) {
+			console.log("rcardsuerid---->" + userId);
+			console.log("amount--->" + results.response);
+			topupAmount = results.response;
+			if(results.response == 'NoThanks'){
+				session.endConversation("Thank you for using our services !")
+				session.endDialog();
+			}else{
+				session.beginDialog('paymentGateway');
+			}
+			
+			// session.endDialogWithResult(results);
+		} ]);
 
-
-exports.topUpOptionsMessage2 = function(session) {
-	return new builder.Message(session).text("Would You like to ?")
-			.suggestedActions(
-					builder.SuggestedActions.create(session,
-							[
-									builder.CardAction.imBack(session, "10",
-											"10RM"),
-									builder.CardAction.imBack(session, "20",
-											"20RM"),
-									builder.CardAction.imBack(session, "50",
-											"50RM"),
-									builder.CardAction.imBack(session, "100",
-											"100RM") ]));
-};
+// Dialog to usageDailog
+bot.dialog('successTopUp', [
+		function(session, body) {
+			var msg = messages.usageCard(session,
+					JSON.parse(body).usuageDetail.unUsedData, ""
+							+ JSON.parse(body).balanceAmt);
+			session.send(msg);
+			session.endConversation("Thank you for using our services !")
+			session.endDialog();
+		}, function(session, results) {
+			session.endDialogWithResult(results);
+		} ]);
