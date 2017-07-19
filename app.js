@@ -40,7 +40,7 @@ var bot = new builder.UniversalBot(connector, [
 		},function(session,results){
 			password = results.response;
 			if(isPasswordInput == 'true'){
-				if(results.response == "password"){
+				if(results.response == "12345"){
 					session.beginDialog('welcomeMessage');	
 				}else{
 					session.endConversation("Password is incorrect, please input any value to relogin",
@@ -94,7 +94,7 @@ bot.dialog('passwordDailog', [
     function (session) {
     	//var msg = messages.welcomeMessage(session);
 		//	var msg = new builder.Message(session).addAttachment(messages.createSigninCard(session));
-		builder.Prompts.text(session, 'Hi! Please enter you password');
+		builder.Prompts.text(session, 'Please enter OTP');
 		isPasswordInput = 'true';
     },
     function (session, results) {
