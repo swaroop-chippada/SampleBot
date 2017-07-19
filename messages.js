@@ -23,6 +23,16 @@ exports.welcomeMessage = function(session) {
 							"Show current usage") ]));
 };
 
+exports.payActionMessage = function(session) {
+	return new builder.Message(session).text("Please select Top up amount")
+			.suggestedActions(
+					builder.SuggestedActions.create(session,
+							[
+									builder.CardAction.imBack(session, "pay",
+											"PAY"),
+									builder.CardAction.imBack(session, "cancel",
+											"Cancel") ]));
+};
 exports.topUpOptionsMessage = function(session) {
 	return new builder.Message(session).text("Please select Top up amount")
 			.suggestedActions(
@@ -110,6 +120,114 @@ exports.usageCard = function(session, userName, limit, usage) {
 								} ]
 							} ]
 				}
+			});
+};
+
+
+exports.paycard = function(session, userName, limit, usage) {
+	return new builder.Message(session)
+			.addAttachment({
+				contentType : "application/vnd.microsoft.card.adaptive",
+				content : {
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "type": "AdaptiveCard",
+  "version": "0.5",
+  "body": [
+    {
+      "type": "ColumnSet",
+      "columns": [
+        {
+          "type": "Column",
+          "size": 2,
+          "items": [
+            {
+              "type": "TextBlock",
+              "text": "Please enter card details",
+              "weight": "bolder",
+              "size": "large"
+            },
+            {
+              "type": "TextBlock",
+              "text": "i am robot, i don't remember user details until told!",
+              "isSubtle": true,
+              "wrap": true
+            },
+            {
+              "type": "TextBlock",
+              "text": "Don't worry, we'll never share or store your information.",
+              "isSubtle": true,
+              "wrap": true,
+              "size": "small"
+            },
+            {
+              "type": "TextBlock",
+              "text": "Card Number",
+              "wrap": true
+            },
+            {
+              "type": "Input.Text",
+              "id": "cardNumber",
+              "placeholder": "411 XXX"
+            },
+            {
+              "type": "TextBlock",
+              "text": "Card Type",
+              "wrap": true
+            },
+            {
+              "type": "Input.Text",
+              "id": "cardType",
+              "placeholder": "visa/master",
+              "style": "email"
+            },
+            {
+              "type": "TextBlock",
+              "text": "CVV"
+            },
+            {
+              "type": "Input.Text",
+              "id": "cvv",
+              "placeholder": "xxx.xxx.xxxx"
+            },
+            {
+              "type": "TextBlock",
+              "text": "Valid Until",
+              "wrap": true
+            },
+            {
+              "type": "Input.Text",
+              "id": "cardType",
+              "placeholder": "01-01-2001"
+            }
+          ]
+        },
+        {
+          "type": "Column",
+          "size": 1,
+          "items": [
+            {
+              "type": "Image",
+              "url": "https://upload.wikimedia.org/wikipedia/commons/b/b2/Diver_Silhouette%2C_Great_Barrier_Reef.jpg",
+              "size": "auto"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "type": "Action.Submit",
+	  "title": "Submit",
+		
+	  
+    },
+    {
+      "type": "Action.Submit",
+      "title": "Cancel"
+    }
+  ]
+}
 			});
 };
 

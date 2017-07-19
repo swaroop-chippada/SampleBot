@@ -37,6 +37,7 @@ server.post('/api/messages', connector.listen());
 var userId;
 var password;
 var isPasswordInput = 'false';
+var topupAmount = 0;
 var bot = new builder.UniversalBot(connector, [
 		
 	function(session) {
@@ -139,15 +140,33 @@ bot.dialog('passwordDailog', [
 //Dialog to rechargeDailog
 bot.dialog('rechargeDailog', [
     function (session) {
-		console.log("suerid---->"+userId);
+		
     	var msg = messages.topUpOptionsMessage(session);
     	builder.Prompts.text(session, msg);
     },
     function (session, results) {
-        session.endDialogWithResult(results);
+		console.log("rcardsuerid---->"+userId);
+		console.log("amount--->"+results.response);
+		topupAmount = results.response;
+		
+		session.beginDialog('paymentGateway');
+		//session.endDialogWithResult(results);
     }
 ]);
 
+bot.dialog('paymentGateway', [
+    function (session) {
+		
+    	var msg = messages.payActionMessage(session);
+    	builder.Prompts.text(session, msg);
+    },
+    function (session, results) {
+		console.log("rcardsuerid---->"+userId);
+		console.log("payment--->"+results.response);
+		
+		//session.endDialogWithResult(results);
+    }
+]);
 
 //Dialog to usageDailog
 bot.dialog('usageDailog', [
