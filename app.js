@@ -36,7 +36,7 @@ server.post('/api/messages', connector.listen());
 // Receive messages from the user and respond
 var userId;
 var password;
-var isPasswordInput;
+var isPasswordInput = 'false';
 var bot = new builder.UniversalBot(connector, [
 		
 	function(session) {
@@ -51,6 +51,7 @@ var bot = new builder.UniversalBot(connector, [
 			//console.log(error);
 			//console.log(response);
 			if(body == 'true'){
+				isPasswordInput='false';
 				session.beginDialog('welcomeMessage');
 			}else{
 					session.beginDialog('passwordDailog');		
@@ -61,6 +62,8 @@ var bot = new builder.UniversalBot(connector, [
 			
 		},function(session,results){
 			password = results.response;
+			console.log("topup--->"+results.response);
+			console.log("passowrd--->"+isPasswordInput);
 			if(isPasswordInput == 'true'){
 				
 			request("http://10.24.3.175:8881/selfcare/authenticate.do?loginId="+userId+"&pword="+results.response , function(error, response, body) {
@@ -75,14 +78,13 @@ var bot = new builder.UniversalBot(connector, [
 					session.endDialog();		
 				}
 			});
-
-				
 			}else if (results.response == 'recharge') {
 				session.beginDialog('rechargeDailog');
 			} else if (results.response == 'usage') {
 				session.beginDialog('usageDailog');
 			}
 		},function(session,results){
+			console.log("rc--->"+results.response);
 			if (results.response == 'recharge') {
 				session.beginDialog('rechargeDailog');
 			} else if (results.response == 'usage') {
